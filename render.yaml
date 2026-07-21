@@ -16,6 +16,8 @@ services:
     value: plane
   - key: PGDATA
     value: /var/lib/postgresql/data
+  region: singapore
+  dockerContext: ./deploy/render
 - type: redis
   name: plane-redis
   ipAllowList: []
@@ -35,6 +37,8 @@ services:
     sync: false
   - key: RABBITMQ_DEFAULT_VHOST
     value: plane
+  region: singapore
+  dockerContext: ./deploy/render
 - type: pserv
   name: plane-minio
   env: docker
@@ -48,6 +52,8 @@ services:
     sync: false
   - key: MINIO_ROOT_PASSWORD
     sync: false
+  region: singapore
+  dockerContext: ./deploy/render
 - type: web
   name: plane-api
   env: docker
@@ -146,6 +152,10 @@ services:
     value: 2
   - key: SECRET_KEY
     generateValue: true
+  - key: API_BASE_URL
+    value: http://localhost:8000
+  dockerContext: ./apps/api
+  region: singapore
 - type: worker
   name: plane-worker
   env: docker
@@ -225,6 +235,8 @@ services:
       type: web
       name: plane-api
       envVarKey: SECRET_KEY
+  region: singapore
+  dockerContext: ./apps/api
 - type: worker
   name: plane-beat-worker
   env: docker
@@ -288,6 +300,8 @@ services:
       type: web
       name: plane-api
       envVarKey: SECRET_KEY
+  region: singapore
+  dockerContext: ./apps/api
 - type: web
   name: plane-web
   env: docker
@@ -303,6 +317,10 @@ services:
     sync: false
   - key: VITE_LIVE_BASE_URL
     sync: false
+  - key: API_BASE_URL
+    value: http://localhost:8000
+  region: singapore
+  dockerContext: ./
 - type: web
   name: plane-admin
   env: docker
@@ -312,6 +330,10 @@ services:
   envVars:
   - key: VITE_API_BASE_URL
     sync: false
+  - key: API_BASE_URL
+    value: http://localhost:8000
+  region: singapore
+  dockerContext: ./
 - type: web
   name: plane-space
   env: docker
@@ -321,6 +343,10 @@ services:
   envVars:
   - key: VITE_API_BASE_URL
     sync: false
+  - key: API_BASE_URL
+    value: http://localhost:8000
+  region: singapore
+  dockerContext: ./
 - type: web
   name: plane-live
   env: docker
@@ -333,3 +359,5 @@ services:
       type: web
       name: plane-api
       envVarKey: LIVE_SERVER_SECRET_KEY
+  region: singapore
+  dockerContext: ./
