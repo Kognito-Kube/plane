@@ -1,7 +1,12 @@
 #!/bin/bash
 set -e
 python manage.py wait_for_db
-# Wait for migrations
+
+# Run migrations
+echo "Running database migrations..."
+python manage.py migrate --noinput
+
+# Wait for migrations to complete
 python manage.py wait_for_migrations
 
 # Create the default bucket
