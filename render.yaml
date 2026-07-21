@@ -17,7 +17,7 @@ services:
   - key: PGDATA
     value: /var/lib/postgresql/data
   region: singapore
-  dockerContext: ./deploy/render
+  dockerContext: ./
 - type: redis
   name: plane-redis
   ipAllowList: []
@@ -38,7 +38,7 @@ services:
   - key: RABBITMQ_DEFAULT_VHOST
     value: plane
   region: singapore
-  dockerContext: ./deploy/render
+  dockerContext: ./
 - type: pserv
   name: plane-minio
   env: docker
@@ -53,11 +53,11 @@ services:
   - key: MINIO_ROOT_PASSWORD
     sync: false
   region: singapore
-  dockerContext: ./deploy/render
+  dockerContext: ./
 - type: web
   name: plane-api
   env: docker
-  dockerfilePath: ./apps/api/Dockerfile.api
+  dockerfilePath: ./deploy/render/Dockerfile.api
   healthCheckPath: /api/health/
   autoDeploy: false
   envVars:
@@ -154,12 +154,12 @@ services:
     generateValue: true
   - key: API_BASE_URL
     value: http://localhost:8000
-  dockerContext: ./apps/api
+  dockerContext: ./
   region: singapore
 - type: worker
   name: plane-worker
   env: docker
-  dockerfilePath: ./apps/api/Dockerfile.api
+  dockerfilePath: ./deploy/render/Dockerfile.api
   autoDeploy: false
   envVars:
   - key: DEBUG
@@ -236,11 +236,11 @@ services:
       name: plane-api
       envVarKey: SECRET_KEY
   region: singapore
-  dockerContext: ./apps/api
+  dockerContext: ./
 - type: worker
   name: plane-beat-worker
   env: docker
-  dockerfilePath: ./apps/api/Dockerfile.api
+  dockerfilePath: ./deploy/render/Dockerfile.api
   autoDeploy: false
   envVars:
   - key: DEBUG
@@ -301,11 +301,11 @@ services:
       name: plane-api
       envVarKey: SECRET_KEY
   region: singapore
-  dockerContext: ./apps/api
+  dockerContext: ./
 - type: web
   name: plane-web
   env: docker
-  dockerfilePath: ./apps/web/Dockerfile.web
+  dockerfilePath: ./deploy/render/Dockerfile.web
   healthCheckPath: /
   autoDeploy: false
   envVars:
@@ -324,7 +324,7 @@ services:
 - type: web
   name: plane-admin
   env: docker
-  dockerfilePath: ./apps/admin/Dockerfile.admin
+  dockerfilePath: ./deploy/render/Dockerfile.admin
   healthCheckPath: /god-mode
   autoDeploy: false
   envVars:
@@ -337,7 +337,7 @@ services:
 - type: web
   name: plane-space
   env: docker
-  dockerfilePath: ./apps/space/Dockerfile.space
+  dockerfilePath: ./deploy/render/Dockerfile.space
   healthCheckPath: /spaces
   autoDeploy: false
   envVars:
@@ -350,7 +350,7 @@ services:
 - type: web
   name: plane-live
   env: docker
-  dockerfilePath: ./apps/live/Dockerfile.live
+  dockerfilePath: ./deploy/render/Dockerfile.live
   healthCheckPath: /live/health
   autoDeploy: false
   envVars:
