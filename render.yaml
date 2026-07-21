@@ -18,10 +18,12 @@ services:
     value: /var/lib/postgresql/data
   region: singapore
   dockerContext: ./
-- type: redis
+- type: pserv
   name: plane-redis
-  ipAllowList: []
-  maxmemoryPolicy: noeviction
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.redis
+  dockerContext: ./
+  region: singapore
 - type: pserv
   name: plane-mq
   env: docker
@@ -360,11 +362,16 @@ services:
   healthCheckPath: /live/health
   autoDeploy: false
   envVars:
-  - key: REDIS_URL
+  - key: REDIS_HOST
     fromService:
       type: redis
       name: plane-redis
-      property: connectionString
+      property: host
+  - key: REDIS_PORT
+    fromService:
+      type: redis
+      name: plane-redis
+      property: port
   - key: LIVE_SERVER_SECRET_KEY
     fromService:
       type: web
