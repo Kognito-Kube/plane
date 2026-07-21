@@ -2,20 +2,6 @@
 set -e
 python manage.py wait_for_db
 
-# Start gunicorn immediately in background
-echo "Starting gunicorn..."
-gunicorn -w "$GUNICORN_WORKERS" -k uvicorn.workers.UvicornWorker plane.asgi:application --bind 0.0.0.0:"${PORT:-8000}" --max-requests 1200 --max-requests-jitter 1000 --access-logfile - &
-GUNICORN_PID=$!
-
-# Run migrations in background
-echo "Starting database migrations..."
-python manage.py migrate --noinput &
-MIGRATION_PID=$!
-
-# Wait for migrations to complete before running post-migration commands
-wait $MIGRATION_PID
-echo "Migrations completed"
-
 # Collect system information
 HOSTNAME=$(hostname)
 MAC_ADDRESS=$(ip link show | awk '/ether/ {print $2}' | head -n 1)
@@ -44,5 +30,5 @@ python manage.py clear_cache
 # Collect static files
 python manage.py collectstatic --noinput
 
-# Wait for gunicorn
-wait $GUNICORN_PID
+# Start gunicorn
+exec gunicorn -w "$GUNICORN_WORKERS" -k uvicorn.workers.UvicornWorker plane.asgi:application --bind 0.0.0.0:"${PORT:-8000}" --max-requests 1200 --max-requests-jitter 1000 --access-logfile -
