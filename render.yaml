@@ -64,7 +64,6 @@ services:
   - key: DEBUG
     value: 0
   - key: CORS_ALLOWED_ORIGINS
-    sync: false
     value: https://plane-web-kognitokube.onrender.com,https://plane-admin-kognitokube.onrender.com,https://plane-space-kognitokube.onrender.com
   - key: POSTGRES_HOST
     fromService:
@@ -142,16 +141,12 @@ services:
   - key: USE_MINIO
     value: 1
   - key: WEB_URL
-    sync: false
     value: https://plane-web-kognitokube.onrender.com
   - key: ADMIN_BASE_URL
-    sync: false
     value: https://plane-admin-kognitokube.onrender.com
   - key: SPACE_BASE_URL
-    sync: false
     value: https://plane-space-kognitokube.onrender.com
   - key: LIVE_BASE_URL
-    sync: false
     value: https://plane-live-kognitokube.onrender.com
   - key: LIVE_SERVER_SECRET_KEY
     generateValue: true
@@ -321,7 +316,6 @@ services:
   autoDeploy: false
   envVars:
   - key: VITE_API_BASE_URL
-    sync: false
     value: https://plane-api-kognitokube.onrender.com
   - key: VITE_ADMIN_BASE_URL
     sync: false
@@ -341,7 +335,6 @@ services:
   autoDeploy: false
   envVars:
   - key: VITE_API_BASE_URL
-    sync: false
     value: https://plane-api-kognitokube.onrender.com
   - key: API_BASE_URL
     value: https://plane-api-kognitokube.onrender.com
@@ -355,7 +348,6 @@ services:
   autoDeploy: false
   envVars:
   - key: VITE_API_BASE_URL
-    sync: false
     value: https://plane-api-kognitokube.onrender.com
   - key: API_BASE_URL
     value: https://plane-api-kognitokube.onrender.com
