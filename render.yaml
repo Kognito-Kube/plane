@@ -101,6 +101,8 @@ services:
       type: redis
       name: plane-redis
       property: port
+  - key: REDIS_URL
+    value: redis://plane-redis:6379/
   - key: RABBITMQ_HOST
     fromService:
       type: pserv
@@ -199,6 +201,8 @@ services:
       type: redis
       name: plane-redis
       property: port
+  - key: REDIS_URL
+    value: redis://plane-redis:6379/
   - key: RABBITMQ_HOST
     fromService:
       type: pserv
@@ -280,6 +284,8 @@ services:
       type: redis
       name: plane-redis
       property: port
+  - key: REDIS_URL
+    value: redis://plane-redis:6379/
   - key: RABBITMQ_HOST
     fromService:
       type: pserv
