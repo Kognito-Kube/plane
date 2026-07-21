@@ -52,8 +52,6 @@ services:
   name: plane-api
   env: docker
   dockerfilePath: ./apps/api/Dockerfile.api
-  buildCommand: ''
-  startCommand: ./bin/docker-entrypoint-api.sh
   healthCheckPath: /api/health/
   autoDeploy: false
   envVars:
@@ -152,8 +150,6 @@ services:
   name: plane-worker
   env: docker
   dockerfilePath: ./apps/api/Dockerfile.api
-  buildCommand: ''
-  startCommand: ./bin/docker-entrypoint-worker.sh
   autoDeploy: false
   envVars:
   - key: DEBUG
@@ -233,8 +229,6 @@ services:
   name: plane-beat-worker
   env: docker
   dockerfilePath: ./apps/api/Dockerfile.api
-  buildCommand: ''
-  startCommand: ./bin/docker-entrypoint-beat.sh
   autoDeploy: false
   envVars:
   - key: DEBUG
@@ -298,8 +292,6 @@ services:
   name: plane-web
   env: docker
   dockerfilePath: ./apps/web/Dockerfile.web
-  buildCommand: ''
-  startCommand: nginx -g "daemon off;"
   healthCheckPath: /
   autoDeploy: false
   envVars:
@@ -315,8 +307,6 @@ services:
   name: plane-admin
   env: docker
   dockerfilePath: ./apps/admin/Dockerfile.admin
-  buildCommand: ''
-  startCommand: nginx -g "daemon off;"
   healthCheckPath: /god-mode
   autoDeploy: false
   envVars:
@@ -326,8 +316,6 @@ services:
   name: plane-space
   env: docker
   dockerfilePath: ./apps/space/Dockerfile.space
-  buildCommand: ''
-  startCommand: nginx -g "daemon off;"
   healthCheckPath: /spaces
   autoDeploy: false
   envVars:
@@ -337,8 +325,6 @@ services:
   name: plane-live
   env: docker
   dockerfilePath: ./apps/live/Dockerfile.live
-  buildCommand: ''
-  startCommand: node server.js
   healthCheckPath: /live/health
   autoDeploy: false
   envVars:
