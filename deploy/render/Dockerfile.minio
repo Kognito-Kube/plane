@@ -1,29 +1,5 @@
 FROM minio/minio
 
-# Install MinIO client
-RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc && \
-    chmod +x /usr/bin/mc
-
 EXPOSE 9000 9090
 
-# Script to create bucket on startup
-COPY <<EOF /entrypoint.sh
-#!/bin/sh
-# Start MinIO in background
-minio server /export --console-address ":9090" &
-MINIO_PID=$!
-
-# Wait for MinIO to be ready
-sleep 5
-
-# Configure mc client and create bucket
-mc alias set myminio http://localhost:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
-mc mb myminio/uploads --ignore-existing
-
-# Wait for MinIO process
-wait $MINIO_PID
-EOF
-
-RUN chmod +x /entrypoint.sh
-
-CMD ["/entrypoint.sh"]
+CMD ["server", "/export", "--console-address", ":9090"]
