@@ -1,3 +1,7 @@
+environments:
+- name: plane-production
+  region: singapore
+
 services:
 - type: pserv
   name: plane-db
@@ -18,12 +22,14 @@ services:
     value: /var/lib/postgresql/data
   region: singapore
   dockerContext: ./
+  envId: plane-production
 - type: pserv
   name: plane-redis
   env: docker
   dockerfilePath: ./deploy/render/Dockerfile.redis
   dockerContext: ./
   region: singapore
+  envId: plane-production
 - type: pserv
   name: plane-mq
   env: docker
@@ -41,6 +47,7 @@ services:
     value: plane
   region: singapore
   dockerContext: ./
+  envId: plane-production
 - type: pserv
   name: plane-minio
   env: docker
@@ -56,6 +63,7 @@ services:
     sync: false
   region: singapore
   dockerContext: ./
+  envId: plane-production
 - type: web
   name: plane-api
   env: docker
