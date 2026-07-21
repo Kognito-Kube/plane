@@ -1,428 +1,349 @@
-# Plane Deployment Blueprint for Render.com
-# Version: v1.3.1
-# Documentation: https://docs.plane.so/self-hosting/overview
-
 services:
-  # ============================================================================
-  # INFRASTRUCTURE SERVICES
-  # ============================================================================
-
-  # PostgreSQL Database
-  - type: pserv
-    name: plane-db
-    env: docker
-    dockerfilePath: ./deploy/render/Dockerfile.postgres
-    disk:
-      name: pgdata
-      mountPath: /var/lib/postgresql/data
-      sizeGB: 10
-    envVars:
-      - key: POSTGRES_USER
-        sync: false
-      - key: POSTGRES_PASSWORD
-        sync: false
-      - key: POSTGRES_DB
-        value: plane
-      - key: PGDATA
-        value: /var/lib/postgresql/data
-
-  # Redis Cache
-  - type: redis
-    name: plane-redis
-    ipAllowList: []
-    maxmemoryPolicy: noeviction
-
-  # RabbitMQ Message Broker
-  - type: pserv
-    name: plane-mq
-    env: docker
-    dockerfilePath: ./deploy/render/Dockerfile.rabbitmq
-    disk:
-      name: rabbitmq-data
-      mountPath: /var/lib/rabbitmq
-      sizeGB: 5
-    envVars:
-      - key: RABBITMQ_DEFAULT_USER
-        sync: false
-      - key: RABBITMQ_DEFAULT_PASS
-        sync: false
-      - key: RABBITMQ_DEFAULT_VHOST
-        value: plane
-
-  # MinIO S3-compatible Storage
-  - type: pserv
-    name: plane-minio
-    env: docker
-    dockerfilePath: ./deploy/render/Dockerfile.minio
-    disk:
-      name: minio-data
-      mountPath: /export
-      sizeGB: 10
-    envVars:
-      - key: MINIO_ROOT_USER
-        sync: false
-      - key: MINIO_ROOT_PASSWORD
-        sync: false
-
-  # ============================================================================
-  # APPLICATION SERVICES
-  # ============================================================================
-
-  # API Server (Django)
-  - type: web
-    name: plane-api
-    env: docker
-    dockerfilePath: ./apps/api/Dockerfile.api
-    buildCommand: ""
-    startCommand: ./bin/docker-entrypoint-api.sh
-    healthCheckPath: /api/health/
-    autoDeploy: false
-    envVars:
-      - key: DEBUG
-        value: 0
-      - key: CORS_ALLOWED_ORIGINS
-        sync: false
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: plane-db
-          property: host
-      - key: POSTGRES_PORT
-        fromService:
-          type: pserv
-          name: plane-db
-          property: port
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_PASSWORD
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_DB
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: plane-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: plane-redis
-          property: port
-      - key: RABBITMQ_HOST
-        fromService:
-          type: pserv
-          name: plane-mq
-          property: host
-      - key: RABBITMQ_PORT
-        value: 5672
-      - key: RABBITMQ_USER
-        fromService:
-          type: pserv
-          name: plane-mq
-          envVarKey: RABBITMQ_DEFAULT_USER
-      - key: RABBITMQ_PASSWORD
-        fromService:
-          type: pserv
-          name: plane-mq
-          envVarKey: RABBITMQ_DEFAULT_PASS
-      - key: RABBITMQ_VHOST
-        fromService:
-          type: pserv
-          name: plane-mq
-          envVarKey: RABBITMQ_DEFAULT_VHOST
-      - key: AWS_ACCESS_KEY_ID
-        fromService:
-          type: pserv
-          name: plane-minio
-          envVarKey: MINIO_ROOT_USER
-      - key: AWS_SECRET_ACCESS_KEY
-        fromService:
-          type: pserv
-          name: plane-minio
-          envVarKey: MINIO_ROOT_PASSWORD
-      - key: AWS_S3_ENDPOINT_URL
-        value: http://plane-minio:9000
-      - key: AWS_S3_BUCKET_NAME
-        value: uploads
-      - key: USE_MINIO
-        value: 1
-      - key: WEB_URL
-        sync: false
-      - key: ADMIN_BASE_URL
-        sync: false
-      - key: SPACE_BASE_URL
-        sync: false
-      - key: LIVE_BASE_URL
-        sync: false
-      - key: LIVE_SERVER_SECRET_KEY
-        generateValue: true
-      - key: GUNICORN_WORKERS
-        value: 2
-      - key: SECRET_KEY
-        generateValue: true
-
-  # Background Worker (Celery)
-  - type: worker
-    name: plane-worker
-    env: docker
-    dockerfilePath: ./apps/api/Dockerfile.api
-    buildCommand: ""
-    startCommand: ./bin/docker-entrypoint-worker.sh
-    autoDeploy: false
-    envVars:
-      - key: DEBUG
-        value: 0
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: plane-db
-          property: host
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_PASSWORD
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_DB
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: plane-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: plane-redis
-          property: port
-      - key: RABBITMQ_HOST
-        fromService:
-          type: pserv
-          name: plane-mq
-          property: host
-      - key: RABBITMQ_USER
-        fromService:
-          type: pserv
-          name: plane-mq
-          envVarKey: RABBITMQ_DEFAULT_USER
-      - key: RABBITMQ_PASSWORD
-        fromService:
-          type: pserv
-          name: plane-mq
-          envVarKey: RABBITMQ_DEFAULT_PASS
-      - key: RABBITMQ_VHOST
-        fromService:
-          type: pserv
-          name: plane-mq
-          envVarKey: RABBITMQ_DEFAULT_VHOST
-      - key: AWS_ACCESS_KEY_ID
-        fromService:
-          type: pserv
-          name: plane-minio
-          envVarKey: MINIO_ROOT_USER
-      - key: AWS_SECRET_ACCESS_KEY
-        fromService:
-          type: pserv
-          name: plane-minio
-          envVarKey: MINIO_ROOT_PASSWORD
-      - key: AWS_S3_ENDPOINT_URL
-        value: http://plane-minio:9000
-      - key: AWS_S3_BUCKET_NAME
-        value: uploads
-      - key: USE_MINIO
-        value: 1
-      - key: SECRET_KEY
-        fromService:
-          type: web
-          name: plane-api
-          envVarKey: SECRET_KEY
-
-  # Beat Worker (Celery Scheduler)
-  - type: worker
-    name: plane-beat-worker
-    env: docker
-    dockerfilePath: ./apps/api/Dockerfile.api
-    buildCommand: ""
-    startCommand: ./bin/docker-entrypoint-beat.sh
-    autoDeploy: false
-    envVars:
-      - key: DEBUG
-        value: 0
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: plane-db
-          property: host
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_PASSWORD
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_DB
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: plane-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: plane-redis
-          property: port
-      - key: RABBITMQ_HOST
-        fromService:
-          type: pserv
-          name: plane-mq
-          property: host
-      - key: RABBITMQ_USER
-        fromService:
-          type: pserv
-          name: plane-mq
-          envVarKey: RABBITMQ_DEFAULT_USER
-      - key: RABBITMQ_PASSWORD
-        fromService:
-          type: pserv
-          name: plane-mq
-          envVarKey: RABBITMQ_DEFAULT_PASS
-      - key: RABBITMQ_VHOST
-        fromService:
-          type: pserv
-          name: plane-mq
-          envVarKey: RABBITMQ_DEFAULT_VHOST
-      - key: SECRET_KEY
-        fromService:
-          type: web
-          name: plane-api
-          envVarKey: SECRET_KEY
-
-  # Database Migrator (one-time job)
-  - type: job
-    name: plane-migrator
-    env: docker
-    dockerfilePath: ./apps/api/Dockerfile.api
-    buildCommand: ""
-    startCommand: ./bin/docker-entrypoint-migrator.sh
-    trigger: manual
-    autoDeploy: false
-    envVars:
-      - key: POSTGRES_HOST
-        fromService:
-          type: pserv
-          name: plane-db
-          property: host
-      - key: POSTGRES_USER
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_USER
-      - key: POSTGRES_PASSWORD
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_PASSWORD
-      - key: POSTGRES_DB
-        fromService:
-          type: pserv
-          name: plane-db
-          envVarKey: POSTGRES_DB
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: plane-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: plane-redis
-          property: port
-      - key: SECRET_KEY
-        fromService:
-          type: web
-          name: plane-api
-          envVarKey: SECRET_KEY
-
-  # Web Frontend (Main App)
-  - type: web
-    name: plane-web
-    env: docker
-    dockerfilePath: ./apps/web/Dockerfile.web
-    buildCommand: ""
-    startCommand: nginx -g "daemon off;"
-    healthCheckPath: /
-    autoDeploy: false
-    envVars:
-      - key: VITE_API_BASE_URL
-        sync: false
-      - key: VITE_ADMIN_BASE_URL
-        sync: false
-      - key: VITE_SPACE_BASE_URL
-        sync: false
-      - key: VITE_LIVE_BASE_URL
-        sync: false
-
-  # Admin Frontend (God Mode)
-  - type: web
-    name: plane-admin
-    env: docker
-    dockerfilePath: ./apps/admin/Dockerfile.admin
-    buildCommand: ""
-    startCommand: nginx -g "daemon off;"
-    healthCheckPath: /god-mode
-    autoDeploy: false
-    envVars:
-      - key: VITE_API_BASE_URL
-        sync: false
-
-  # Space Frontend (Public Projects)
-  - type: web
-    name: plane-space
-    env: docker
-    dockerfilePath: ./apps/space/Dockerfile.space
-    buildCommand: ""
-    startCommand: nginx -g "daemon off;"
-    healthCheckPath: /spaces
-    autoDeploy: false
-    envVars:
-      - key: VITE_API_BASE_URL
-        sync: false
-
-  # Live Collaboration Server
-  - type: web
-    name: plane-live
-    env: docker
-    dockerfilePath: ./apps/live/Dockerfile.live
-    buildCommand: ""
-    startCommand: node server.js
-    healthCheckPath: /live/health
-    autoDeploy: false
-    envVars:
-      - key: LIVE_SERVER_SECRET_KEY
-        fromService:
-          type: web
-          name: plane-api
-          envVarKey: LIVE_SERVER_SECRET_KEY
+- type: pserv
+  name: plane-db
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.postgres
+  disk:
+    name: pgdata
+    mountPath: /var/lib/postgresql/data
+    sizeGB: 10
+  envVars:
+  - key: POSTGRES_USER
+    sync: false
+  - key: POSTGRES_PASSWORD
+    sync: false
+  - key: POSTGRES_DB
+    value: plane
+  - key: PGDATA
+    value: /var/lib/postgresql/data
+- type: redis
+  name: plane-redis
+  ipAllowList: []
+  maxmemoryPolicy: noeviction
+- type: pserv
+  name: plane-mq
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.rabbitmq
+  disk:
+    name: rabbitmq-data
+    mountPath: /var/lib/rabbitmq
+    sizeGB: 5
+  envVars:
+  - key: RABBITMQ_DEFAULT_USER
+    sync: false
+  - key: RABBITMQ_DEFAULT_PASS
+    sync: false
+  - key: RABBITMQ_DEFAULT_VHOST
+    value: plane
+- type: pserv
+  name: plane-minio
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.minio
+  disk:
+    name: minio-data
+    mountPath: /export
+    sizeGB: 10
+  envVars:
+  - key: MINIO_ROOT_USER
+    sync: false
+  - key: MINIO_ROOT_PASSWORD
+    sync: false
+- type: web
+  name: plane-api
+  env: docker
+  dockerfilePath: ./apps/api/Dockerfile.api
+  buildCommand: ''
+  startCommand: ./bin/docker-entrypoint-api.sh
+  healthCheckPath: /api/health/
+  autoDeploy: false
+  envVars:
+  - key: DEBUG
+    value: 0
+  - key: CORS_ALLOWED_ORIGINS
+    sync: false
+  - key: POSTGRES_HOST
+    fromService:
+      type: pserv
+      name: plane-db
+      property: host
+  - key: POSTGRES_PORT
+    fromService:
+      type: pserv
+      name: plane-db
+      property: port
+  - key: POSTGRES_USER
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_USER
+  - key: POSTGRES_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_PASSWORD
+  - key: POSTGRES_DB
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_DB
+  - key: REDIS_HOST
+    fromService:
+      type: redis
+      name: plane-redis
+      property: host
+  - key: REDIS_PORT
+    fromService:
+      type: redis
+      name: plane-redis
+      property: port
+  - key: RABBITMQ_HOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      property: host
+  - key: RABBITMQ_PORT
+    value: 5672
+  - key: RABBITMQ_USER
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_USER
+  - key: RABBITMQ_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_PASS
+  - key: RABBITMQ_VHOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_VHOST
+  - key: AWS_ACCESS_KEY_ID
+    fromService:
+      type: pserv
+      name: plane-minio
+      envVarKey: MINIO_ROOT_USER
+  - key: AWS_SECRET_ACCESS_KEY
+    fromService:
+      type: pserv
+      name: plane-minio
+      envVarKey: MINIO_ROOT_PASSWORD
+  - key: AWS_S3_ENDPOINT_URL
+    value: http://plane-minio:9000
+  - key: AWS_S3_BUCKET_NAME
+    value: uploads
+  - key: USE_MINIO
+    value: 1
+  - key: WEB_URL
+    sync: false
+  - key: ADMIN_BASE_URL
+    sync: false
+  - key: SPACE_BASE_URL
+    sync: false
+  - key: LIVE_BASE_URL
+    sync: false
+  - key: LIVE_SERVER_SECRET_KEY
+    generateValue: true
+  - key: GUNICORN_WORKERS
+    value: 2
+  - key: SECRET_KEY
+    generateValue: true
+- type: worker
+  name: plane-worker
+  env: docker
+  dockerfilePath: ./apps/api/Dockerfile.api
+  buildCommand: ''
+  startCommand: ./bin/docker-entrypoint-worker.sh
+  autoDeploy: false
+  envVars:
+  - key: DEBUG
+    value: 0
+  - key: POSTGRES_HOST
+    fromService:
+      type: pserv
+      name: plane-db
+      property: host
+  - key: POSTGRES_USER
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_USER
+  - key: POSTGRES_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_PASSWORD
+  - key: POSTGRES_DB
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_DB
+  - key: REDIS_HOST
+    fromService:
+      type: redis
+      name: plane-redis
+      property: host
+  - key: REDIS_PORT
+    fromService:
+      type: redis
+      name: plane-redis
+      property: port
+  - key: RABBITMQ_HOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      property: host
+  - key: RABBITMQ_USER
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_USER
+  - key: RABBITMQ_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_PASS
+  - key: RABBITMQ_VHOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_VHOST
+  - key: AWS_ACCESS_KEY_ID
+    fromService:
+      type: pserv
+      name: plane-minio
+      envVarKey: MINIO_ROOT_USER
+  - key: AWS_SECRET_ACCESS_KEY
+    fromService:
+      type: pserv
+      name: plane-minio
+      envVarKey: MINIO_ROOT_PASSWORD
+  - key: AWS_S3_ENDPOINT_URL
+    value: http://plane-minio:9000
+  - key: AWS_S3_BUCKET_NAME
+    value: uploads
+  - key: USE_MINIO
+    value: 1
+  - key: SECRET_KEY
+    fromService:
+      type: web
+      name: plane-api
+      envVarKey: SECRET_KEY
+- type: worker
+  name: plane-beat-worker
+  env: docker
+  dockerfilePath: ./apps/api/Dockerfile.api
+  buildCommand: ''
+  startCommand: ./bin/docker-entrypoint-beat.sh
+  autoDeploy: false
+  envVars:
+  - key: DEBUG
+    value: 0
+  - key: POSTGRES_HOST
+    fromService:
+      type: pserv
+      name: plane-db
+      property: host
+  - key: POSTGRES_USER
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_USER
+  - key: POSTGRES_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_PASSWORD
+  - key: POSTGRES_DB
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_DB
+  - key: REDIS_HOST
+    fromService:
+      type: redis
+      name: plane-redis
+      property: host
+  - key: REDIS_PORT
+    fromService:
+      type: redis
+      name: plane-redis
+      property: port
+  - key: RABBITMQ_HOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      property: host
+  - key: RABBITMQ_USER
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_USER
+  - key: RABBITMQ_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_PASS
+  - key: RABBITMQ_VHOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_VHOST
+  - key: SECRET_KEY
+    fromService:
+      type: web
+      name: plane-api
+      envVarKey: SECRET_KEY
+- type: web
+  name: plane-web
+  env: docker
+  dockerfilePath: ./apps/web/Dockerfile.web
+  buildCommand: ''
+  startCommand: nginx -g "daemon off;"
+  healthCheckPath: /
+  autoDeploy: false
+  envVars:
+  - key: VITE_API_BASE_URL
+    sync: false
+  - key: VITE_ADMIN_BASE_URL
+    sync: false
+  - key: VITE_SPACE_BASE_URL
+    sync: false
+  - key: VITE_LIVE_BASE_URL
+    sync: false
+- type: web
+  name: plane-admin
+  env: docker
+  dockerfilePath: ./apps/admin/Dockerfile.admin
+  buildCommand: ''
+  startCommand: nginx -g "daemon off;"
+  healthCheckPath: /god-mode
+  autoDeploy: false
+  envVars:
+  - key: VITE_API_BASE_URL
+    sync: false
+- type: web
+  name: plane-space
+  env: docker
+  dockerfilePath: ./apps/space/Dockerfile.space
+  buildCommand: ''
+  startCommand: nginx -g "daemon off;"
+  healthCheckPath: /spaces
+  autoDeploy: false
+  envVars:
+  - key: VITE_API_BASE_URL
+    sync: false
+- type: web
+  name: plane-live
+  env: docker
+  dockerfilePath: ./apps/live/Dockerfile.live
+  buildCommand: ''
+  startCommand: node server.js
+  healthCheckPath: /live/health
+  autoDeploy: false
+  envVars:
+  - key: LIVE_SERVER_SECRET_KEY
+    fromService:
+      type: web
+      name: plane-api
+      envVarKey: LIVE_SERVER_SECRET_KEY
