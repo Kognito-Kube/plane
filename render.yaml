@@ -361,7 +361,10 @@ services:
   autoDeploy: false
   envVars:
   - key: REDIS_URL
-    value: redis://plane-redis:6379/
+    fromService:
+      type: redis
+      name: plane-redis
+      property: connectionString
   - key: LIVE_SERVER_SECRET_KEY
     fromService:
       type: web
