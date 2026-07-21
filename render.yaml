@@ -60,7 +60,7 @@ services:
   name: plane-api
   env: docker
   dockerfilePath: ./deploy/render/Dockerfile.api
-  healthCheckPath: /api/health/
+  healthCheckPath: /
   autoDeploy: false
   envVars:
   - key: DEBUG
