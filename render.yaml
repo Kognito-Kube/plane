@@ -367,5 +367,7 @@ services:
       type: web
       name: plane-api
       envVarKey: LIVE_SERVER_SECRET_KEY
+  - key: API_BASE_URL
+    value: https://plane-api-kognitokube.onrender.com
   region: singapore
   dockerContext: ./
