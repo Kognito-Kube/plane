@@ -145,7 +145,7 @@ services:
   - key: SECRET_KEY
     generateValue: true
   - key: API_BASE_URL
-    value: https://plane-api-zszv.onrender.com
+    value: https://plane-api-fbif.onrender.com
   dockerContext: ./
   region: singapore
 - type: worker
@@ -302,15 +302,15 @@ services:
   autoDeploy: false
   envVars:
   - key: VITE_API_BASE_URL
-    value: https://plane-api-zszv.onrender.com
+    value: https://plane-api-fbif.onrender.com
   - key: VITE_ADMIN_BASE_URL
-    value: https://plane-admin-onu3.onrender.com
+    value: https://plane-admin-w4qg.onrender.com
   - key: VITE_SPACE_BASE_URL
-    value: https://plane-space-pfk9.onrender.com
+    value: https://plane-space-so5m.onrender.com
   - key: VITE_LIVE_BASE_URL
-    value: https://plane-live-cbh5.onrender.com
+    value: https://plane-live-7lr7.onrender.com
   - key: API_BASE_URL
-    value: https://plane-api-zszv.onrender.com
+    value: https://plane-api-fbif.onrender.com
   region: singapore
   dockerContext: ./
 - type: web
@@ -321,9 +321,9 @@ services:
   autoDeploy: false
   envVars:
   - key: VITE_API_BASE_URL
-    value: https://plane-api-zszv.onrender.com
+    value: https://plane-api-fbif.onrender.com
   - key: API_BASE_URL
-    value: https://plane-api-zszv.onrender.com
+    value: https://plane-api-fbif.onrender.com
   region: singapore
   dockerContext: ./
 - type: web
@@ -334,9 +334,9 @@ services:
   autoDeploy: false
   envVars:
   - key: VITE_API_BASE_URL
-    value: https://plane-api-zszv.onrender.com
+    value: https://plane-api-fbif.onrender.com
   - key: API_BASE_URL
-    value: https://plane-api-zszv.onrender.com
+    value: https://plane-api-fbif.onrender.com
   region: singapore
   dockerContext: ./
 - type: web
@@ -362,6 +362,6 @@ services:
       name: plane-api
       envVarKey: LIVE_SERVER_SECRET_KEY
   - key: API_BASE_URL
-    value: https://plane-api-zszv.onrender.com
+    value: https://plane-api-fbif.onrender.com
   region: singapore
   dockerContext: ./

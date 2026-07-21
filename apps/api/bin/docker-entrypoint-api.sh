@@ -8,6 +8,9 @@ fi
 
 python manage.py wait_for_db
 
+# Apply database migrations
+python manage.py migrate --noinput
+
 # Collect system information
 HOSTNAME=$(hostname)
 MAC_ADDRESS=$(ip link show | awk '/ether/ {print $2}' | head -n 1)
