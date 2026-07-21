@@ -316,15 +316,20 @@ services:
   dockerfilePath: ./deploy/render/Dockerfile.web
   healthCheckPath: /
   autoDeploy: false
+  buildArgs:
+    VITE_API_BASE_URL: https://plane-api-kognitokube.onrender.com
+    VITE_ADMIN_BASE_URL: https://plane-admin-kognitokube.onrender.com
+    VITE_SPACE_BASE_URL: https://plane-space-kognitokube.onrender.com
+    VITE_LIVE_BASE_URL: https://plane-live-kognitokube.onrender.com
   envVars:
   - key: VITE_API_BASE_URL
     value: https://plane-api-kognitokube.onrender.com
   - key: VITE_ADMIN_BASE_URL
-    sync: false
+    value: https://plane-admin-kognitokube.onrender.com
   - key: VITE_SPACE_BASE_URL
-    sync: false
+    value: https://plane-space-kognitokube.onrender.com
   - key: VITE_LIVE_BASE_URL
-    sync: false
+    value: https://plane-live-kognitokube.onrender.com
   - key: API_BASE_URL
     value: https://plane-api-kognitokube.onrender.com
   region: singapore
