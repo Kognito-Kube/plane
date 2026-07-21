@@ -94,12 +94,12 @@ services:
       envVarKey: POSTGRES_DB
   - key: REDIS_HOST
     fromService:
-      type: redis
+      type: pserv
       name: plane-redis
       property: host
   - key: REDIS_PORT
     fromService:
-      type: redis
+      type: pserv
       name: plane-redis
       property: port
   - key: REDIS_URL
@@ -190,12 +190,12 @@ services:
       envVarKey: POSTGRES_DB
   - key: REDIS_HOST
     fromService:
-      type: redis
+      type: pserv
       name: plane-redis
       property: host
   - key: REDIS_PORT
     fromService:
-      type: redis
+      type: pserv
       name: plane-redis
       property: port
   - key: REDIS_URL
@@ -273,12 +273,12 @@ services:
       envVarKey: POSTGRES_DB
   - key: REDIS_HOST
     fromService:
-      type: redis
+      type: pserv
       name: plane-redis
       property: host
   - key: REDIS_PORT
     fromService:
-      type: redis
+      type: pserv
       name: plane-redis
       property: port
   - key: REDIS_URL
@@ -364,12 +364,12 @@ services:
   envVars:
   - key: REDIS_HOST
     fromService:
-      type: redis
+      type: pserv
       name: plane-redis
       property: host
   - key: REDIS_PORT
     fromService:
-      type: redis
+      type: pserv
       name: plane-redis
       property: port
   - key: LIVE_SERVER_SECRET_KEY
