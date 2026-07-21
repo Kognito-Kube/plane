@@ -41,6 +41,7 @@ RUN pnpm turbo run build --filter=admin
 FROM nginx:1.27-alpine AS production
 COPY apps/admin/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY --from=installer /app/apps/admin/build/client /usr/share/nginx/html
+# cache-bust: nginx redirect loop fix 2026-07-21
 
 EXPOSE 3001
 
