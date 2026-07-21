@@ -144,12 +144,14 @@ services:
     value: 2
   - key: SECRET_KEY
     generateValue: true
+  - key: API_BASE_URL
+    value: https://plane-api-zszv.onrender.com
   dockerContext: ./
   region: singapore
 - type: worker
   name: plane-worker
   env: docker
-  dockerfilePath: ./deploy/render/Dockerfile.api
+  dockerfilePath: ./deploy/render/Dockerfile.worker
   autoDeploy: false
   envVars:
   - key: DEBUG
@@ -230,7 +232,7 @@ services:
 - type: worker
   name: plane-beat-worker
   env: docker
-  dockerfilePath: ./deploy/render/Dockerfile.api
+  dockerfilePath: ./deploy/render/Dockerfile.beat
   autoDeploy: false
   envVars:
   - key: DEBUG
@@ -298,7 +300,17 @@ services:
   dockerfilePath: ./deploy/render/Dockerfile.web
   healthCheckPath: /
   autoDeploy: false
-  envVars: []
+  envVars:
+  - key: VITE_API_BASE_URL
+    value: https://plane-api-zszv.onrender.com
+  - key: VITE_ADMIN_BASE_URL
+    value: https://plane-admin-onu3.onrender.com
+  - key: VITE_SPACE_BASE_URL
+    value: https://plane-space-pfk9.onrender.com
+  - key: VITE_LIVE_BASE_URL
+    value: https://plane-live-cbh5.onrender.com
+  - key: API_BASE_URL
+    value: https://plane-api-zszv.onrender.com
   region: singapore
   dockerContext: ./
 - type: web
@@ -307,7 +319,11 @@ services:
   dockerfilePath: ./deploy/render/Dockerfile.admin
   healthCheckPath: /
   autoDeploy: false
-  envVars: []
+  envVars:
+  - key: VITE_API_BASE_URL
+    value: https://plane-api-zszv.onrender.com
+  - key: API_BASE_URL
+    value: https://plane-api-zszv.onrender.com
   region: singapore
   dockerContext: ./
 - type: web
@@ -316,7 +332,11 @@ services:
   dockerfilePath: ./deploy/render/Dockerfile.space
   healthCheckPath: /
   autoDeploy: false
-  envVars: []
+  envVars:
+  - key: VITE_API_BASE_URL
+    value: https://plane-api-zszv.onrender.com
+  - key: API_BASE_URL
+    value: https://plane-api-zszv.onrender.com
   region: singapore
   dockerContext: ./
 - type: web
@@ -341,5 +361,7 @@ services:
       type: web
       name: plane-api
       envVarKey: LIVE_SERVER_SECRET_KEY
+  - key: API_BASE_URL
+    value: https://plane-api-zszv.onrender.com
   region: singapore
   dockerContext: ./
