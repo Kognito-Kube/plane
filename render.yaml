@@ -148,6 +148,7 @@ services:
     value: https://plane-api-ydsi.onrender.com
   dockerContext: ./
   region: singapore
+# Celery worker (recreated 2026-07-31 after crashloop suspension; CELERY_CONCURRENCY caps prefork procs)
 - type: worker
   name: plane-worker
   env: docker
