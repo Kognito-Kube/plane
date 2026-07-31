@@ -10,4 +10,10 @@ python manage.py wait_for_db
 # Wait for migrations
 python manage.py wait_for_migrations
 # Run the processes
-celery -A plane worker -l info
+# Limit prefork concurrency when CELERY_CONCURRENCY is set (small instances
+# expose many host CPUs and the default can OOM the container)
+CONCURRENCY_ARGS=""
+if [ -n "$CELERY_CONCURRENCY" ]; then
+  CONCURRENCY_ARGS="--concurrency=${CELERY_CONCURRENCY}"
+fi
+celery -A plane worker -l info ${CONCURRENCY_ARGS}

@@ -156,6 +156,8 @@ services:
   envVars:
   - key: DEBUG
     value: 0
+  - key: CELERY_CONCURRENCY
+    value: '2'
   - key: POSTGRES_HOST
     fromService:
       type: pserv
