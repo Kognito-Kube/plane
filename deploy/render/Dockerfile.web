@@ -60,7 +60,8 @@ ENV TURBO_TELEMETRY_DISABLED=1
 RUN pnpm turbo run build --filter=web
 
 FROM nginx:1.27-alpine AS production
-COPY apps/web/nginx/nginx.conf /etc/nginx/nginx.conf
+# Render-specific nginx conf: static root + same-origin /api and /auth proxy
+COPY deploy/render/nginx/web.conf /etc/nginx/nginx.conf
 COPY --from=installer /app/apps/web/build/client /usr/share/nginx/html
 
 EXPOSE 3000
