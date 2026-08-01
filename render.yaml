@@ -331,7 +331,7 @@ services:
   name: plane-admin
   env: docker
   dockerfilePath: ./deploy/render/Dockerfile.admin
-  healthCheckPath: /god-mode
+  healthCheckPath: /god-mode/
   autoDeploy: false
   envVars:
   # Empty: app calls /api and /auth same-origin; nginx proxies to the API
