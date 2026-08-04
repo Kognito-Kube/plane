@@ -133,11 +133,15 @@ services:
       name: plane-minio
       envVarKey: MINIO_ROOT_PASSWORD
   - key: AWS_S3_ENDPOINT_URL
-    value: http://plane-minio:9000
+    value: http://plane-minio-1msn:9000
   - key: AWS_S3_BUCKET_NAME
     value: uploads
   - key: USE_MINIO
     value: 1
+  # Presigned MinIO URLs are generated against the browser-facing host
+  # (web/admin nginx send X-Forwarded-Host and proxy /uploads to MinIO)
+  - key: USE_X_FORWARDED_HOST
+    value: '1'
   - key: LIVE_SERVER_SECRET_KEY
     generateValue: true
   - key: GUNICORN_WORKERS
@@ -230,7 +234,7 @@ services:
       name: plane-minio
       envVarKey: MINIO_ROOT_PASSWORD
   - key: AWS_S3_ENDPOINT_URL
-    value: http://plane-minio:9000
+    value: http://plane-minio-1msn:9000
   - key: AWS_S3_BUCKET_NAME
     value: uploads
   - key: USE_MINIO

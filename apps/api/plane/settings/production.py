@@ -14,6 +14,11 @@ DEBUG = int(os.environ.get("DEBUG", 0)) == 1
 # Honor the 'X-Forwarded-Proto' header for request.is_secure()
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+# Honor the 'X-Forwarded-Host' header for request.get_host(). Required when
+# the API sits behind a proxy that preserves the original browser-facing
+# host (MinIO presigned URLs are generated against request.get_host()).
+USE_X_FORWARDED_HOST = os.environ.get("USE_X_FORWARDED_HOST", "0") == "1"
+
 INSTALLED_APPS += ("scout_apm.django",)  # noqa
 
 
