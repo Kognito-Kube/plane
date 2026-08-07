@@ -1,0 +1,61 @@
+# syntax=docker/dockerfile:1.7
+FROM node:22-alpine AS base
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
+RUN corepack enable
+
+FROM base AS builder
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+ARG TURBO_VERSION=2.9.4
+RUN corepack enable pnpm && pnpm add -g turbo@${TURBO_VERSION}
+COPY . .
+
+RUN turbo prune --scope=admin --docker
+
+FROM base AS installer
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+COPY .gitignore .gitignore
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+RUN corepack enable pnpm
+
+COPY --from=builder /app/out/full/ .
+COPY turbo.json turbo.json
+
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch --store-dir=/pnpm/store
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store CI=true pnpm install --offline --frozen-lockfile --store-dir=/pnpm/store
+
+# Empty VITE_API_BASE_URL => admin app calls /api and /auth on its own
+# origin; nginx proxies them to the API service (first-party cookies).
+ARG VITE_API_BASE_URL=""
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
+# The admin app is served under /god-mode on its own domain; the router
+# basename and asset URLs must include that prefix.
+ARG VITE_ADMIN_BASE_PATH="/god-mode"
+ENV VITE_ADMIN_BASE_PATH=$VITE_ADMIN_BASE_PATH
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV TURBO_TELEMETRY_DISABLED=1
+
+RUN pnpm turbo run build --filter=admin
+
+FROM nginx:1.27-alpine AS production
+# Force cache invalidation for nginx config deployment
+ARG CACHE_BUST=render-2026-07-31-01
+RUN echo "$CACHE_BUST" > /dev/null
+# Render-specific nginx conf: static /god-mode + same-origin /api and /auth proxy
+COPY deploy/render/nginx/admin.conf /etc/nginx/nginx.conf
+COPY --from=installer /app/apps/admin/build/client /usr/share/nginx/html/god-mode
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:3000/god-mode/ >/dev/null || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

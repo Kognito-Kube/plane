@@ -1,0 +1,8 @@
+FROM postgres:15.7-alpine
+
+# Increase max connections for production
+RUN echo "max_connections = 1000" >> /usr/local/share/postgresql/postgresql.conf.sample
+
+EXPOSE 5432
+
+CMD ["postgres"]

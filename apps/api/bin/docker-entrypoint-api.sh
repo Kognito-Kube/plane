@@ -1,11 +1,15 @@
 #!/bin/bash
 set -e
-python manage.py wait_for_db
-# Wait for migrations
-python manage.py wait_for_migrations
 
-# Create the default bucket
-#!/bin/bash
+# Construct REDIS_URL from host/port if not set
+if [ -z "$REDIS_URL" ] && [ -n "$REDIS_HOST" ]; then
+  export REDIS_URL="redis://${REDIS_HOST}:${REDIS_PORT:-6379}"
+fi
+
+python manage.py wait_for_db
+
+# Apply database migrations
+python manage.py migrate --noinput
 
 # Collect system information
 HOSTNAME=$(hostname)
@@ -35,4 +39,5 @@ python manage.py clear_cache
 # Collect static files
 python manage.py collectstatic --noinput
 
+# Start gunicorn
 exec gunicorn -w "$GUNICORN_WORKERS" -k uvicorn.workers.UvicornWorker plane.asgi:application --bind 0.0.0.0:"${PORT:-8000}" --max-requests 1200 --max-requests-jitter 1000 --access-logfile -

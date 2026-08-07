@@ -1,0 +1,390 @@
+services:
+- type: pserv
+  name: plane-db
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.postgres
+  disk:
+    name: pgdata
+    mountPath: /var/lib/postgresql/data
+    sizeGB: 10
+  envVars:
+  - key: POSTGRES_USER
+    value: plane
+  - key: POSTGRES_PASSWORD
+    value: gkDjQv1jHnIWJnWJj6Khz2L0z0AUGmMM
+  - key: POSTGRES_DB
+    value: plane
+  - key: PGDATA
+    value: /var/lib/postgresql/data
+  region: singapore
+  dockerContext: ./
+- type: pserv
+  name: plane-redis
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.redis
+  dockerContext: ./
+  region: singapore
+- type: pserv
+  name: plane-mq
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.rabbitmq
+  disk:
+    name: rabbitmq-data
+    mountPath: /var/lib/rabbitmq
+    sizeGB: 5
+  envVars:
+  - key: RABBITMQ_DEFAULT_USER
+    value: plane
+  - key: RABBITMQ_DEFAULT_PASS
+    value: 11zu7CrkxJOakBEoLM4PeSYwZ5NE4Fis
+  - key: RABBITMQ_DEFAULT_VHOST
+    value: plane
+  region: singapore
+  dockerContext: ./
+- type: pserv
+  name: plane-minio
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.minio
+  disk:
+    name: minio-data
+    mountPath: /export
+    sizeGB: 10
+  envVars:
+  - key: MINIO_ROOT_USER
+    value: ce7b3e890ed1f884c6817e39
+  - key: MINIO_ROOT_PASSWORD
+    value: HdLHtGLfJpVNYkMVB0QKhAFvb3IX9KAD
+  region: singapore
+  dockerContext: ./
+- type: web
+  name: plane-api
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.api
+  healthCheckPath: /
+  autoDeploy: false
+  envVars:
+  - key: DEBUG
+    value: 0
+  - key: POSTGRES_HOST
+    fromService:
+      type: pserv
+      name: plane-db
+      property: host
+  - key: POSTGRES_PORT
+    fromService:
+      type: pserv
+      name: plane-db
+      property: port
+  - key: POSTGRES_USER
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_USER
+  - key: POSTGRES_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_PASSWORD
+  - key: POSTGRES_DB
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_DB
+  - key: REDIS_HOST
+    fromService:
+      type: pserv
+      name: plane-redis
+      property: host
+  - key: REDIS_PORT
+    fromService:
+      type: pserv
+      name: plane-redis
+      property: port
+  - key: RABBITMQ_HOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      property: host
+  - key: RABBITMQ_PORT
+    value: 5672
+  - key: RABBITMQ_USER
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_USER
+  - key: RABBITMQ_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_PASS
+  - key: RABBITMQ_VHOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_VHOST
+  - key: AWS_ACCESS_KEY_ID
+    fromService:
+      type: pserv
+      name: plane-minio
+      envVarKey: MINIO_ROOT_USER
+  - key: AWS_SECRET_ACCESS_KEY
+    fromService:
+      type: pserv
+      name: plane-minio
+      envVarKey: MINIO_ROOT_PASSWORD
+  - key: AWS_S3_ENDPOINT_URL
+    value: http://plane-minio-1msn:9000
+  - key: AWS_S3_BUCKET_NAME
+    value: uploads
+  - key: USE_MINIO
+    value: 1
+  # Presigned MinIO URLs are generated against the browser-facing host
+  # (web/admin nginx send X-Forwarded-Host and proxy /uploads to MinIO)
+  - key: USE_X_FORWARDED_HOST
+    value: '1'
+  - key: LIVE_SERVER_SECRET_KEY
+    generateValue: true
+  - key: GUNICORN_WORKERS
+    value: 2
+  - key: SECRET_KEY
+    generateValue: true
+  - key: API_BASE_URL
+    value: https://plane-api-ydsi.onrender.com
+  # Hosts used for redirects after auth flows and for asset URLs
+  - key: WEB_URL
+    value: https://plane-web-0wuq.onrender.com
+  - key: ADMIN_BASE_URL
+    value: https://plane-admin-b724.onrender.com
+  - key: SPACE_BASE_URL
+    value: https://plane-space-nknd.onrender.com
+  # Also becomes CSRF_TRUSTED_ORIGINS (required for same-origin proxied form POSTs)
+  - key: CORS_ALLOWED_ORIGINS
+    value: https://plane-web-0wuq.onrender.com,https://plane-admin-b724.onrender.com,https://plane-space-nknd.onrender.com
+  dockerContext: ./
+  region: singapore
+# Celery worker (recreated 2026-07-31 after crashloop suspension; CELERY_CONCURRENCY caps prefork procs)
+- type: worker
+  name: plane-worker
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.worker
+  autoDeploy: false
+  envVars:
+  - key: DEBUG
+    value: 0
+  - key: CELERY_CONCURRENCY
+    value: '2'
+  - key: POSTGRES_HOST
+    fromService:
+      type: pserv
+      name: plane-db
+      property: host
+  - key: POSTGRES_USER
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_USER
+  - key: POSTGRES_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_PASSWORD
+  - key: POSTGRES_DB
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_DB
+  - key: REDIS_HOST
+    fromService:
+      type: pserv
+      name: plane-redis
+      property: host
+  - key: REDIS_PORT
+    fromService:
+      type: pserv
+      name: plane-redis
+      property: port
+  - key: RABBITMQ_HOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      property: host
+  - key: RABBITMQ_USER
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_USER
+  - key: RABBITMQ_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_PASS
+  - key: RABBITMQ_VHOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_VHOST
+  - key: AWS_ACCESS_KEY_ID
+    fromService:
+      type: pserv
+      name: plane-minio
+      envVarKey: MINIO_ROOT_USER
+  - key: AWS_SECRET_ACCESS_KEY
+    fromService:
+      type: pserv
+      name: plane-minio
+      envVarKey: MINIO_ROOT_PASSWORD
+  - key: AWS_S3_ENDPOINT_URL
+    value: http://plane-minio-1msn:9000
+  - key: AWS_S3_BUCKET_NAME
+    value: uploads
+  - key: USE_MINIO
+    value: 1
+  - key: SECRET_KEY
+    fromService:
+      type: web
+      name: plane-api
+      envVarKey: SECRET_KEY
+  region: singapore
+  dockerContext: ./
+- type: worker
+  name: plane-beat-worker
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.beat
+  autoDeploy: false
+  envVars:
+  - key: DEBUG
+    value: 0
+  - key: POSTGRES_HOST
+    fromService:
+      type: pserv
+      name: plane-db
+      property: host
+  - key: POSTGRES_USER
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_USER
+  - key: POSTGRES_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_PASSWORD
+  - key: POSTGRES_DB
+    fromService:
+      type: pserv
+      name: plane-db
+      envVarKey: POSTGRES_DB
+  - key: REDIS_HOST
+    fromService:
+      type: pserv
+      name: plane-redis
+      property: host
+  - key: REDIS_PORT
+    fromService:
+      type: pserv
+      name: plane-redis
+      property: port
+  - key: RABBITMQ_HOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      property: host
+  - key: RABBITMQ_USER
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_USER
+  - key: RABBITMQ_PASSWORD
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_PASS
+  - key: RABBITMQ_VHOST
+    fromService:
+      type: pserv
+      name: plane-mq
+      envVarKey: RABBITMQ_DEFAULT_VHOST
+  - key: SECRET_KEY
+    fromService:
+      type: web
+      name: plane-api
+      envVarKey: SECRET_KEY
+  region: singapore
+  dockerContext: ./
+- type: web
+  name: plane-web
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.web
+  healthCheckPath: /
+  autoDeploy: false
+  envVars:
+  # Empty: app calls /api and /auth same-origin; nginx proxies to the API
+  - key: VITE_API_BASE_URL
+    value: ''
+  - key: VITE_ADMIN_BASE_URL
+    value: https://plane-admin-b724.onrender.com
+  - key: VITE_SPACE_BASE_URL
+    value: https://plane-space-nknd.onrender.com
+  - key: VITE_LIVE_BASE_URL
+    value: https://plane-live-xofn.onrender.com
+  - key: PORT
+    value: '3000'
+  region: singapore
+  dockerContext: ./
+- type: web
+  name: plane-admin
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.admin
+  healthCheckPath: /god-mode/
+  autoDeploy: false
+  envVars:
+  # Empty: app calls /api and /auth same-origin; nginx proxies to the API
+  - key: VITE_API_BASE_URL
+    value: ''
+  - key: VITE_ADMIN_BASE_PATH
+    value: /god-mode
+  - key: PORT
+    value: '3000'
+  region: singapore
+  dockerContext: ./
+- type: web
+  name: plane-space
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.space
+  healthCheckPath: /
+  autoDeploy: false
+  envVars:
+  - key: VITE_API_BASE_URL
+    value: https://plane-api-ydsi.onrender.com
+  - key: API_BASE_URL
+    value: https://plane-api-ydsi.onrender.com
+  - key: PORT
+    value: '3000'
+  region: singapore
+  dockerContext: ./
+- type: web
+  name: plane-live
+  env: docker
+  dockerfilePath: ./deploy/render/Dockerfile.live
+  healthCheckPath: /live/health
+  autoDeploy: false
+  envVars:
+  - key: REDIS_HOST
+    fromService:
+      type: pserv
+      name: plane-redis
+      property: host
+  - key: REDIS_PORT
+    fromService:
+      type: pserv
+      name: plane-redis
+      property: port
+  - key: LIVE_SERVER_SECRET_KEY
+    fromService:
+      type: web
+      name: plane-api
+      envVarKey: LIVE_SERVER_SECRET_KEY
+  - key: API_BASE_URL
+    value: https://plane-api-ydsi.onrender.com
+  region: singapore
+  dockerContext: ./
